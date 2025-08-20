@@ -107,7 +107,9 @@
           href={item.href}
           active={$page.url.pathname === item.href}
         >
-          <svelte:component this={item.icon} slot="icon" class="w-5 h-5" />
+          <svelte:fragment slot="icon">
+            <svelte:component this={item.icon} class="w-5 h-5" />
+          </svelte:fragment>
         </SidebarItem>
       {/each}
     </SidebarGroup>
@@ -135,12 +137,14 @@
       </div>
     {:else}
       <div class="absolute bottom-0 left-0 right-0 p-3 border-t border-gray-700">
-        <SidebarItem 
+        <SidebarItem
           label="Sign In"
           href="/login"
           active={$page.url.pathname === '/login'}
         >
-          <ArrowRightToBracketOutline slot="icon" class="w-5 h-5" />
+          <svelte:fragment slot="icon">
+            <ArrowRightToBracketOutline class="w-5 h-5" />
+          </svelte:fragment>
         </SidebarItem>
       </div>
     {/if}

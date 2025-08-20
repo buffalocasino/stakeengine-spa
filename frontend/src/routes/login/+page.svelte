@@ -66,6 +66,7 @@
               bind:value={email}
               required
               disabled={loading}
+              autocomplete="email"
             >
               <EnvelopeSolid slot="left" class="w-4 h-4 text-gray-500 dark:text-gray-400" />
             </Input>
@@ -80,6 +81,7 @@
               bind:value={password}
               required
               disabled={loading}
+              autocomplete="current-password"
             >
               <button
                 slot="right"
