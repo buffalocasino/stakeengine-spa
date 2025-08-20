@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Sidebar, SidebarGroup, SidebarItem, SidebarWrapper } from 'flowbite-svelte';
+  import { Sidebar, SidebarGroup, SidebarItem, SidebarWrapper, Avatar, Dropdown, DropdownItem, DropdownDivider } from 'flowbite-svelte';
   import { 
     HomeSolid, 
     PlaySolid, 
@@ -7,11 +7,16 @@
     UserSolid, 
     CreditCardSolid,
     ChevronLeftOutline,
-    ChevronRightOutline
+    ChevronRightOutline,
+    ArrowRightToBracketOutline,
+    UserCircleSolid
   } from 'flowbite-svelte-icons';
   import { page } from '$app/stores';
   import { onMount } from 'svelte';
   import { sidebarOpen } from '$lib/stores/sidebar';
+  import { user } from '$lib/stores/auth';
+  import { supabase } from '$lib/supabaseClient';
+  import { goto } from '$app/navigation';
 
   const navItems = [
     { 
@@ -43,6 +48,11 @@
 
   function toggleSidebar() {
     sidebarOpen.update(open => !open);
+  }
+
+  async function logout() {
+    await supabase.auth.signOut();
+    goto('/login');
   }
 
   // Close sidebar on mobile by default
@@ -101,5 +111,38 @@
         </SidebarItem>
       {/each}
     </SidebarGroup>
+
+    <!-- User Profile Section -->
+    {#if $user}
+      <div class="absolute bottom-0 left-0 right-0 p-3 border-t border-gray-700">
+        <div class="flex items-center space-x-3">
+          <Avatar class="w-8 h-8">
+            <UserCircleSolid class="w-8 h-8 text-gray-400" />
+          </Avatar>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-white truncate">
+              {$user.email}
+            </p>
+          </div>
+          <button
+            on:click={logout}
+            class="p-1 text-gray-400 hover:text-white transition-colors"
+            title="Sign out"
+          >
+            <ArrowRightToBracketOutline class="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    {:else}
+      <div class="absolute bottom-0 left-0 right-0 p-3 border-t border-gray-700">
+        <SidebarItem 
+          label="Sign In"
+          href="/login"
+          active={$page.url.pathname === '/login'}
+        >
+          <ArrowRightToBracketOutline slot="icon" class="w-5 h-5" />
+        </SidebarItem>
+      </div>
+    {/if}
   </SidebarWrapper>
 </Sidebar>
