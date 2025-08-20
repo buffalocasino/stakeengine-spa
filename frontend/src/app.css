@@ -4,6 +4,15 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Force dark mode globally */
+:root {
+  color-scheme: dark;
+}
+
+html {
+  @apply dark;
+}
+
 @theme {
   --color-primary-50: #fff5f2;
   --color-primary-100: #fff1ee;

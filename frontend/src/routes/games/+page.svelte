@@ -60,16 +60,16 @@
 <h1 class="text-2xl font-bold mb-4">Games</h1>
 
 {#if loading}
-  <p>Loading configs...</p>
+  <p class="text-gray-300">Loading configs...</p>
 {:else if error}
-  <p class="text-red-500">Error: {error}</p>
+  <p class="text-red-400">Error: {error}</p>
 {:else}
-  <h2 class="text-xl mb-2">Available Configs</h2>
+  <h2 class="text-xl mb-4 text-primary-500">Available Configs</h2>
   <ul class="space-y-4">
     {#each configs as cfg}
-      <li class="border p-3 rounded bg-gray-50">
-        <h3 class="font-semibold">{cfg.name}</h3>
-        <pre class="text-sm">{JSON.stringify(cfg.content, null, 2)}</pre>
+      <li class="border border-gray-700 p-4 rounded-lg bg-gray-800">
+        <h3 class="font-semibold text-primary-500 mb-2">{cfg.name}</h3>
+        <pre class="text-sm text-gray-300 bg-charcoal-950 p-3 rounded overflow-x-auto">{JSON.stringify(cfg.content, null, 2)}</pre>
       </li>
     {/each}
   </ul>

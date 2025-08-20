@@ -68,8 +68,9 @@
 <!-- Toggle Button -->
 <button
   on:click={toggleSidebar}
-  class="fixed top-4 left-4 z-50 p-2 text-gray-600 bg-white rounded-lg shadow-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 lg:left-64"
-  class:lg:left-4={!$sidebarOpen}
+  class="fixed top-4 z-50 p-2 text-gray-300 bg-gray-800 rounded-lg shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-300"
+  class:left-4={!$sidebarOpen}
+  class:left-64={$sidebarOpen}
   aria-label="Toggle sidebar"
 >
   {#if $sidebarOpen}
@@ -83,10 +84,10 @@
 <Sidebar 
   class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform duration-300 ease-in-out {$sidebarOpen ? 'translate-x-0' : '-translate-x-full'}"
 >
-  <SidebarWrapper class="h-full px-3 py-4 overflow-y-auto bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
+  <SidebarWrapper class="h-full px-3 py-4 overflow-y-auto bg-gray-800 dark:bg-gray-800 border-r border-gray-700 dark:border-gray-700">
     <!-- Brand/Logo -->
     <div class="flex items-center mb-6 px-3">
-      <span class="text-xl font-semibold text-gray-900 dark:text-white">StakeEngine</span>
+      <span class="text-xl font-semibold text-primary-500">StakeEngine</span>
     </div>
 
     <SidebarGroup>
@@ -96,12 +97,9 @@
           href={item.href}
           active={$page.url.pathname === item.href}
         >
-          <svelte:fragment slot="icon">
-            <svelte:component this={item.icon} class="w-5 h-5" />
-          </svelte:fragment>
+          <svelte:component this={item.icon} slot="icon" class="w-5 h-5" />
         </SidebarItem>
       {/each}
     </SidebarGroup>
   </SidebarWrapper>
 </Sidebar>
-  

@@ -126,9 +126,9 @@
   </div>
 
   <!-- Features List -->
-  <Card>
-    <h2 class="text-xl font-semibold mb-4">What you get with credits:</h2>
-    <ul class="space-y-2 text-gray-600 dark:text-gray-400">
+  <Card class="bg-gray-800 border-gray-700">
+    <h2 class="text-xl font-semibold mb-4 text-primary-500">What you get with credits:</h2>
+    <ul class="space-y-2 text-gray-300">
       <li class="flex items-center">
         <CheckCircleSolid class="w-5 h-5 text-green-500 mr-2" />
         Access to premium games
@@ -172,16 +172,12 @@
 
   {#if success}
     <Alert color="green" class="mb-4">
-      <svelte:fragment slot="icon">
-        <CheckCircleSolid class="w-4 h-4" />
-      </svelte:fragment>
+      <CheckCircleSolid slot="icon" class="w-4 h-4" />
       Payment successful! Credits have been added to your account.
     </Alert>
   {:else if error}
     <Alert color="red" class="mb-4">
-      <svelte:fragment slot="icon">
-        <ExclamationCircleOutline class="w-4 h-4" />
-      </svelte:fragment>
+      <ExclamationCircleOutline slot="icon" class="w-4 h-4" />
       {error}
     </Alert>
   {:else}
