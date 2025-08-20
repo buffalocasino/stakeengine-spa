@@ -1,13 +1,18 @@
 <script lang="ts">
   import Sidebar from '$lib/components/Sidebar.svelte';
+  import { sidebarOpen } from '$lib/stores/sidebar';
+  import '../app.css';
 </script>
 
-<div class="flex h-screen bg-gray-100">
-  <!-- Sidebar -->
-  <Sidebar />
+<!-- Sidebar Component (Fixed Position) -->
+<Sidebar />
 
-  <!-- Main content area -->
-  <main class="flex-1 overflow-y-auto p-6">
+<!-- Main Content Area -->
+<main 
+  class="min-h-screen bg-gray-100 transition-all duration-300 ease-in-out ml-0 lg:ml-64"
+  class:lg:ml-0={!$sidebarOpen}
+>
+  <div class="p-6 pt-16">
     <slot />
-  </main>
-</div>
+  </div>
+</main>

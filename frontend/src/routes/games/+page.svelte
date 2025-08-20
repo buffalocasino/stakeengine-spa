@@ -2,14 +2,17 @@
   import { supabase } from "$lib/supabaseClient";
   import { onMount } from "svelte";
 
-  let files: any[] = [];
+  interface ConfigFile {
+    name: string;
+    content: Record<string, unknown> | { error: string };
+  }
+
+  let configs: ConfigFile[] = [];
   let loading = true;
   let error: string | null = null;
-  let configs: Record<string, any> = {};
 
-  // Fetch list of files in the "configs" bucket
   onMount(async () => {
-    const { data, error: err } = await supabase
+    const { data: files, error: err } = await supabase
       .storage
       .from("configs")
       .list();
@@ -20,21 +23,37 @@
       return;
     }
 
-    // For each file, fetch its contents
-    for (const f of data) {
-      const { data: url } = supabase.storage
-        .from("configs")
-        .getPublicUrl(f.name);
-
-      try {
-        const res = await fetch(url.publicUrl);
-        configs[f.name] = await res.json();
-      } catch (e) {
-        configs[f.name] = { error: "Could not fetch config" };
-      }
+    if (!files) {
+      error = "No configs found.";
+      loading = false;
+      return;
     }
 
-    loading = false;
+    try {
+      configs = await Promise.all(
+        files.map(async (f) => {
+          const { data: url } = supabase.storage
+            .from("configs")
+            .getPublicUrl(f.name);
+
+          if (!url?.publicUrl) {
+            return { name: f.name, content: { error: "Missing public URL" } };
+          }
+
+          try {
+            const res = await fetch(url.publicUrl);
+            const json = await res.json();
+            return { name: f.name, content: json };
+          } catch {
+            return { name: f.name, content: { error: "Could not fetch config" } };
+          }
+        })
+      );
+    } catch (e) {
+      error = e instanceof Error ? e.message : "Unexpected error";
+    } finally {
+      loading = false;
+    }
   });
 </script>
 
@@ -47,10 +66,10 @@
 {:else}
   <h2 class="text-xl mb-2">Available Configs</h2>
   <ul class="space-y-4">
-    {#each Object.entries(configs) as [name, cfg]}
+    {#each configs as cfg}
       <li class="border p-3 rounded bg-gray-50">
-        <h3 class="font-semibold">{name}</h3>
-        <pre class="text-sm">{JSON.stringify(cfg, null, 2)}</pre>
+        <h3 class="font-semibold">{cfg.name}</h3>
+        <pre class="text-sm">{JSON.stringify(cfg.content, null, 2)}</pre>
       </li>
     {/each}
   </ul>

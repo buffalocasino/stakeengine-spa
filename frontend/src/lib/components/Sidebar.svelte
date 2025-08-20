@@ -1,58 +1,107 @@
 <script lang="ts">
-    import { writable } from 'svelte/store';
-    import { page } from '$app/stores';
-  
-    const minimized = writable(false);
-  
-    const links = [
-      { name: 'Home', href: '/', icon: '🏠' },
-      { name: 'Games', href: '/games', icon: '🎮' },
-      { name: 'Vault', href: '/vault', icon: '💼' },
-      { name: 'Profile', href: '/profile', icon: '👤' },
-      { name: 'Buy', href: '/buy', icon: '💳' }
-    ];
-  
-    function toggle() {
-      minimized.update(v => !v);
+  import { Sidebar, SidebarGroup, SidebarItem, SidebarWrapper } from 'flowbite-svelte';
+  import { 
+    HomeSolid, 
+    PlaySolid, 
+    WalletSolid, 
+    UserSolid, 
+    CreditCardSolid,
+    ChevronLeftOutline,
+    ChevronRightOutline
+  } from 'flowbite-svelte-icons';
+  import { page } from '$app/stores';
+  import { onMount } from 'svelte';
+  import { sidebarOpen } from '$lib/stores/sidebar';
+
+  const navItems = [
+    { 
+      name: 'Home', 
+      href: '/', 
+      icon: HomeSolid 
+    },
+    { 
+      name: 'Games', 
+      href: '/games', 
+      icon: PlaySolid 
+    },
+    { 
+      name: 'Vault', 
+      href: '/vault', 
+      icon: WalletSolid 
+    },
+    { 
+      name: 'Profile', 
+      href: '/profile', 
+      icon: UserSolid 
+    },
+    { 
+      name: 'Buy', 
+      href: '/buy', 
+      icon: CreditCardSolid 
     }
-  </script>
-  
-  <div class="h-full flex flex-col bg-white border-r shadow-md transition-all duration-300"
-       class:min-w-[64px]={$minimized}
-       class:w-64={!$minimized}>
-    
-    <!-- Header / Toggle -->
-    <div class="flex items-center justify-between p-4 border-b">
-      {#if !$minimized}
-        <h1 class="text-lg font-bold">App</h1>
-      {/if}
-      <button
-        class="p-2 rounded hover:bg-gray-200"
-        on:click={toggle}
-        aria-label="Toggle sidebar"
-      >
-        {#if $minimized}
-          ➡️
-        {:else}
-          ⬅️
-        {/if}
-      </button>
+  ];
+
+  function toggleSidebar() {
+    sidebarOpen.update(open => !open);
+  }
+
+  // Close sidebar on mobile by default
+  onMount(() => {
+    if (window.innerWidth < 1024) {
+      sidebarOpen.set(false);
+    }
+  });
+</script>
+
+<!-- Mobile Overlay -->
+{#if $sidebarOpen}
+  <div 
+    class="fixed inset-0 z-30 bg-gray-900 bg-opacity-50 lg:hidden"
+    on:click={toggleSidebar}
+    on:keydown={(e) => e.key === 'Escape' && toggleSidebar()}
+    role="button"
+    tabindex="0"
+    aria-label="Close sidebar"
+  ></div>
+{/if}
+
+<!-- Toggle Button -->
+<button
+  on:click={toggleSidebar}
+  class="fixed top-4 left-4 z-50 p-2 text-gray-600 bg-white rounded-lg shadow-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 lg:left-64"
+  class:lg:left-4={!$sidebarOpen}
+  aria-label="Toggle sidebar"
+>
+  {#if $sidebarOpen}
+    <ChevronLeftOutline class="w-5 h-5" />
+  {:else}
+    <ChevronRightOutline class="w-5 h-5" />
+  {/if}
+</button>
+
+<!-- Sidebar -->
+<Sidebar 
+  class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform duration-300 ease-in-out {$sidebarOpen ? 'translate-x-0' : '-translate-x-full'}"
+>
+  <SidebarWrapper class="h-full px-3 py-4 overflow-y-auto bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
+    <!-- Brand/Logo -->
+    <div class="flex items-center mb-6 px-3">
+      <span class="text-xl font-semibold text-gray-900 dark:text-white">StakeEngine</span>
     </div>
-  
-    <!-- Nav Links -->
-    <nav class="flex-1 p-2 space-y-2">
-      {#each links as link}
-        <a
-          href={link.href}
-          class="flex items-center px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-          class:bg-gray-200={$page.url.pathname === link.href}
+
+    <SidebarGroup>
+      {#each navItems as item}
+        <SidebarItem 
+          label={item.name}
+          href={item.href}
+          active={$page.url.pathname === item.href}
         >
-          <span class="text-lg">{link.icon}</span>
-          {#if !$minimized}
-            <span class="ml-3">{link.name}</span>
-          {/if}
-        </a>
+          <svelte:fragment slot="icon">
+            <svelte:component this={item.icon} class="w-5 h-5" />
+          </svelte:fragment>
+        </SidebarItem>
       {/each}
-    </nav>
-  </div>
+    </SidebarGroup>
+  </SidebarWrapper>
+</Sidebar>
   
