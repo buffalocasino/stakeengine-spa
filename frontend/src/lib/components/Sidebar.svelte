@@ -70,7 +70,7 @@
   on:click={toggleSidebar}
   class="fixed top-4 z-50 p-2 text-gray-300 bg-gray-800 rounded-lg shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-300"
   class:left-4={!$sidebarOpen}
-  class:left-64={$sidebarOpen}
+  class:lg:left-64={$sidebarOpen}
   aria-label="Toggle sidebar"
 >
   {#if $sidebarOpen}

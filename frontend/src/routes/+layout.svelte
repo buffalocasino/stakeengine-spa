@@ -16,9 +16,8 @@
 
 <!-- Main Content Area -->
 <main 
-  class="min-h-screen bg-gray-900 dark:bg-gray-900 transition-all duration-300 ease-in-out"
-  class:ml-0={!$sidebarOpen}
-  class:ml-64={$sidebarOpen}
+  class="min-h-screen bg-gray-900 dark:bg-gray-900 transition-all duration-300 ease-in-out ml-0"
+  class:lg:ml-64={$sidebarOpen}
 >
   <div class="p-6 pt-16">
     <slot />
