@@ -137,10 +137,10 @@
       
       alert(`Simulation Results:\n` +
             `Spins: ${result.total_spins}\n` +
-            `Total Bet: $${result.total_bet.toFixed(2)}\n` +
-            `Total Win: $${result.total_win.toFixed(2)}\n` +
-            `Actual RTP: ${(result.actual_rtp * 100).toFixed(2)}%\n` +
-            `Hit Frequency: ${(result.hit_frequency * 100).toFixed(2)}%`);
+            `Total Bet: $${result.total_bet?.toFixed(2) || '0.00'}\n` +
+            `Total Win: $${result.total_win?.toFixed(2) || '0.00'}\n` +
+            `Actual RTP: ${(result.actual_rtp * 100)?.toFixed(2) || '0.00'}%\n` +
+            `Hit Frequency: ${(result.hit_frequency * 100)?.toFixed(2) || '0.00'}%`);
     } catch (e) {
       error = `Simulation failed: ${e instanceof Error ? e.message : 'Unknown error'}`;
     } finally {
@@ -289,7 +289,7 @@
                 </div>
               </div>
               <div class="text-right">
-                <div class="font-bold text-green-400">${winner.amount.toFixed(2)}</div>
+                <div class="font-bold text-green-400">${winner.amount?.toFixed(2) || '0.00'}</div>
                 <div class="text-xs text-gray-500">{winner.time}</div>
               </div>
             </div>
@@ -370,7 +370,7 @@
             <div class="space-y-4">
               <div>
                 <Label for="balance" class="mb-2">Balance</Label>
-                <div class="text-2xl font-bold text-green-400">${balance.toFixed(2)}</div>
+                <div class="text-2xl font-bold text-green-400">${balance?.toFixed(2) || '0.00'}</div>
               </div>
               
               <div>
@@ -388,7 +388,7 @@
               
               <div class="space-y-2">
                 <Button
-                  on:click={spin}
+                  onclick={spin}
                   disabled={loading || !apiConnected || betAmount > balance}
                   class="w-full"
                   color="primary"
@@ -398,12 +398,12 @@
                     Spinning...
                   {:else}
                     <PlaySolid class="mr-2 w-4 h-4" />
-                    Spin (${betAmount.toFixed(2)})
+                    Spin (${betAmount?.toFixed(2) || '0.00'})
                   {/if}
                 </Button>
                 
                 <Button
-                  on:click={runSimulation}
+                  onclick={runSimulation}
                   disabled={loading || !apiConnected}
                   class="w-full"
                   color="alternative"
@@ -426,11 +426,11 @@
                 </div>
                 <div class="flex justify-between">
                   <span class="text-gray-400">RTP:</span>
-                  <span class="text-white">{(gameConfig.rtp * 100).toFixed(2)}%</span>
+                  <span class="text-white">{(gameConfig.rtp * 100)?.toFixed(2) || '0.00'}%</span>
             </div>
             <div class="flex justify-between">
               <span class="text-gray-400">House Edge:</span>
-              <span class="text-white">{(gameConfig.house_edge * 100).toFixed(2)}%</span>
+              <span class="text-white">{(gameConfig.house_edge * 100)?.toFixed(2) || '0.00'}%</span>
             </div>
             <div class="flex justify-between">
               <span class="text-gray-400">Max Bet:</span>
@@ -465,14 +465,14 @@
             <div class="bg-green-900/20 border border-green-500/30 rounded-lg p-4 mb-4">
               <h3 class="text-lg font-semibold text-green-400 mb-2">🎉 You Won!</h3>
               <div class="text-2xl font-bold text-green-400 mb-2">
-                ${lastSpin.total_win.toFixed(2)}
+                ${lastSpin.total_win?.toFixed(2) || '0.00'}
               </div>
               
               {#if lastSpin.wins.length > 0}
                 <div class="space-y-1">
                   {#each lastSpin.wins as win}
                     <div class="text-sm text-green-300">
-                      {win.symbol} x{win.kind} = ${win.win.toFixed(2)}
+                      {win.symbol} x{win.kind} = ${win.win?.toFixed(2) || '0.00'}
                     </div>
                   {/each}
                 </div>
