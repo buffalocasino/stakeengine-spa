@@ -1,0 +1,16 @@
+name: Math-SDK Job
+on:
+  schedule:
+    - cron: "0 0 * * *"  # daily
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - run: pip install -r math/requirements.txt
+      - run: python math/generate_configs.py
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

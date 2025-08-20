@@ -1,0 +1,5 @@
+setup.py
+stakeengine.egg-info/PKG-INFO
+stakeengine.egg-info/SOURCES.txt
+stakeengine.egg-info/dependency_links.txt
+stakeengine.egg-info/top_level.txt
