@@ -7,11 +7,11 @@
       <h3 class="text-primary-500 font-semibold text-lg mb-4">Account Information</h3>
       <div class="space-y-3">
         <div>
-          <label class="text-gray-400 text-sm">Username</label>
+          <span class="text-gray-400 text-sm block">Username</span>
           <p class="text-white">user@example.com</p>
         </div>
         <div>
-          <label class="text-gray-400 text-sm">Member Since</label>
+          <span class="text-gray-400 text-sm block">Member Since</span>
           <p class="text-white">January 2024</p>
         </div>
       </div>
@@ -21,11 +21,11 @@
       <h3 class="text-primary-500 font-semibold text-lg mb-4">Account Stats</h3>
       <div class="space-y-3">
         <div>
-          <label class="text-gray-400 text-sm">Current Credits</label>
+          <span class="text-gray-400 text-sm block">Current Credits</span>
           <p class="text-white font-bold">1,250</p>
         </div>
         <div>
-          <label class="text-gray-400 text-sm">Games Played</label>
+          <span class="text-gray-400 text-sm block">Games Played</span>
           <p class="text-white">47</p>
         </div>
       </div>
