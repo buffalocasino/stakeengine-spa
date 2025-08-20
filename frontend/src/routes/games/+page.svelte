@@ -74,7 +74,7 @@
 </script>
 
 <div class="max-w-6xl mx-auto">
-  <h1 class="text-3xl font-bold text-white mb-6">StakeEngine Games</h1>
+  <h1 class="text-3xl font-bold text-white mb-6">BuffaloCasino Games</h1>
   
   {#if error}
     <Alert color="red" class="mb-6">

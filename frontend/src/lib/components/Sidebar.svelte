@@ -97,7 +97,7 @@
   <SidebarWrapper class="h-full px-3 py-4 overflow-y-auto bg-gray-800 dark:bg-gray-800 border-r border-gray-700 dark:border-gray-700">
     <!-- Brand/Logo -->
     <div class="flex items-center mb-6 px-3">
-      <span class="text-xl font-semibold text-primary-500">StakeEngine</span>
+      <span class="text-xl font-semibold text-primary-500">BuffaloCasino</span>
     </div>
 
     <SidebarGroup>

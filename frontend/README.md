@@ -1,6 +1,6 @@
-# sv
+# BuffaloCasino Frontend
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A modern casino gaming platform built with SvelteKit, featuring authentication, real-time gaming, and beautiful UI powered by Flowbite.
 
 ## Creating a project
 

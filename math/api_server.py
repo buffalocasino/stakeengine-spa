@@ -5,7 +5,7 @@ import random
 from typing import List, Dict, Any, Optional
 import json
 
-app = FastAPI(title="StakeEngine Math API", version="1.0.0")
+app = FastAPI(title="BuffaloCasino Math API", version="1.0.0")
 
 # Configure CORS
 app.add_middleware(
@@ -56,12 +56,12 @@ class SimulationResult(BaseModel):
 @app.get("/")
 async def root():
     """Health check endpoint"""
-    return {"message": "StakeEngine Math API is running"}
+    return {"message": "BuffaloCasino Math API is running"}
 
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
-    return {"status": "healthy", "service": "stakeengine-math-api"}
+    return {"status": "healthy", "service": "buffalocasino-math-api"}
 
 @app.post("/api/game/spin", response_model=SpinResult)
 async def spin_game(request: SpinRequest):
@@ -180,7 +180,7 @@ async def get_default_config():
     """Get default game configuration"""
     return {
         "game_id": "slot_basic",
-        "provider_name": "StakeEngine",
+        "provider_name": "BuffaloCasino",
         "game_name": "Basic Slot",
         "rtp": 0.96,
         "house_edge": 0.04,
