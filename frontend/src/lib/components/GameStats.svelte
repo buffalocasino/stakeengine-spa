@@ -3,7 +3,7 @@
   import { user } from '$lib/stores/auth';
   import { gameTrackingService, gameTracking } from '$lib/stores/gameTracking';
   import { Card, Badge, Progressbar } from 'flowbite-svelte';
-  import { TrendingUpSolid, TrendingDownSolid, PlaySolid, CurrencyDollarSolid } from 'flowbite-svelte-icons';
+  import { ArrowUpOutline, ArrowDownOutline, PlaySolid, ChartPieSolid } from 'flowbite-svelte-icons';
 
   export let gameId: string = '';
   
@@ -95,7 +95,7 @@
     <!-- Weekly Statistics -->
     <Card class="p-4 bg-gradient-to-br from-green-900/50 to-blue-900/50 border-green-500/30">
       <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
-        <CurrencyDollarSolid class="w-5 h-5 mr-2" />
+        <ChartPieSolid class="w-5 h-5 mr-2" />
         Last 7 Days
       </h3>
       
@@ -115,9 +115,9 @@
         <div class="text-center">
           <div class="text-2xl font-bold {totalStats.netResult >= 0 ? 'text-green-400' : 'text-red-400'} flex items-center justify-center">
             {#if totalStats.netResult >= 0}
-              <TrendingUpSolid class="w-5 h-5 mr-1" />
+              <ArrowUpOutline class="w-5 h-5 mr-1" />
             {:else}
-              <TrendingDownSolid class="w-5 h-5 mr-1" />
+              <ArrowDownOutline class="w-5 h-5 mr-1" />
             {/if}
             {formatCurrency(totalStats.netResult)}
           </div>

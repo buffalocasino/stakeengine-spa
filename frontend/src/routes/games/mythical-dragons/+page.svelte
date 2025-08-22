@@ -6,8 +6,12 @@
   import { gameTrackingService, gameTracking } from '$lib/stores/gameTracking';
   import ApiStatus from '$lib/components/ApiStatus.svelte';
   import GameStats from '$lib/components/GameStats.svelte';
-  import { Card, Button, Input, Label, Alert, Spinner } from 'flowbite-svelte';
+  import { Card, Input, Label, Alert, Spinner } from 'flowbite-svelte';
+  import { Button } from 'flowbite-svelte';
   import { PlaySolid, CogSolid, ArrowLeftOutline } from 'flowbite-svelte-icons';
+  import GameSymbol from '$lib/components/GameSymbol.svelte';
+  import SlotMachine from '$lib/components/SlotMachine.svelte';
+  import AuthModal from '$lib/components/AuthModal.svelte';
   
   // Game state
   let gameConfig: GameConfig | null = null;
@@ -19,6 +23,8 @@
   let gameStarted = false;
   let autoPlay = false;
   let autoSpinsRemaining = 0;
+  let slotMachineSpinning = false;
+  let showAuthModal = false;
   
   // Use centralized API connection and game tracking
   $: apiConnected = $apiConnection.connected;
@@ -28,15 +34,14 @@
   let sessionId: string | null = null;
   
   // Mythical Dragons specific config
-  const dragonSymbols = ['🐉', '🔥', '💎', '👑', '⚔️', '🏰', '🌟'];
-  const dragonConfig = {
+  const dragonSymbols = ['dragon', 'fire', 'diamond', 'crown', 'sword', 'castle', 'star', 'bonus', 'multiplier', 'scatter'];
+  const dragonConfig: GameConfig = {
     game_id: "mythical_dragons",
-    provider_name: "BuffaloCasino",
+    provider_name: "StakeEngine",
     game_name: "Mythical Dragons",
     rtp: 0.96,
     house_edge: 0.04,
     max_bet: 500,
-    theme: "dragons",
     paylines: {
       "0": [1, 1, 1, 1, 1], // Middle line
       "1": [0, 0, 0, 0, 0], // Top line
@@ -70,10 +75,17 @@
     }
   });
 
-  async function spin() {
+  async function spin(): Promise<void> {
     if (!gameConfig || betAmount > balance || loading || !apiConnected) return;
     
+    // Show auth modal if user is not logged in
+    if (!$user) {
+      showAuthModal = true;
+      return;
+    }
+    
     loading = true;
+    slotMachineSpinning = true;
     error = null;
     const spinStartTime = Date.now();
     const balanceBefore = balance;
@@ -88,8 +100,9 @@
       const themedBoard = result.board.map(reel => 
         reel.map(symbol => {
           const symbolMap: Record<string, string> = {
-            'A': '🐉', 'K': '🔥', 'Q': '💎', 'J': '👑', 
-            '10': '⚔️', '9': '🏰', 'W': '🌟'
+            'A': 'dragon', 'K': 'fire', 'Q': 'diamond', 'J': 'crown', 
+            '10': 'sword', '9': 'castle', 'W': 'star', 'B': 'bonus', 
+            'M': 'multiplier', 'S': 'scatter'
           };
           return symbolMap[symbol] || symbol;
         })
@@ -128,30 +141,42 @@
     } catch (e) {
       error = `Spin failed: ${e instanceof Error ? e.message : 'Unknown error'}`;
       autoPlay = false;
+      slotMachineSpinning = false;
     } finally {
       loading = false;
     }
   }
 
-  function startAutoPlay(spins: number) {
-    if (balance < betAmount * spins) {
+  function onSlotMachineSpinComplete() {
+    slotMachineSpinning = false;
+  }
+
+  function startAutoPlay(spins: number): void {
+    if (!$user) {
+      showAuthModal = true;
+      return;
+    }
+    
+    if (betAmount > balance || loading) {
       error = "Insufficient balance for auto play";
       return;
     }
+    
     autoPlay = true;
     autoSpinsRemaining = spins;
     spin();
   }
 
-  function stopAutoPlay() {
+  function stopAutoPlay(): void {
     autoPlay = false;
     autoSpinsRemaining = 0;
   }
 
   function getSymbolMultiplier(symbol: string): string {
     const multipliers: Record<string, string> = {
-      '🐉': '100x', '🔥': '50x', '💎': '25x', '👑': '15x',
-      '⚔️': '10x', '🏰': '5x', '🌟': 'WILD'
+      'dragon': '100x', 'fire': '50x', 'diamond': '25x', 'crown': '15x',
+      'sword': '10x', 'castle': '5x', 'star': 'WILD', 'bonus': 'BONUS',
+      'multiplier': '2x-10x', 'scatter': 'SCATTER'
     };
     return multipliers[symbol] || '1x';
   }
@@ -176,6 +201,7 @@
         <div class="text-xl font-bold text-green-400">${balance.toFixed(2)}</div>
       </div>
     </div>
+  </div>
 
   <div class="max-w-7xl mx-auto p-6">
     <!-- API Status -->
@@ -196,33 +222,12 @@
         <Card class="p-4 md:p-6 bg-gradient-to-br from-purple-900/50 to-blue-900/50 border-purple-500/30">
           <!-- Slot Machine -->
           <div class="mb-4 md:mb-6">
-            {#if lastSpin}
-              <div class="grid grid-cols-5 gap-1 md:gap-3 mb-4 md:mb-6">
-                {#each lastSpin.board as reel, reelIndex}
-                  <div class="space-y-1 md:space-y-3">
-                    {#each reel as symbol, symbolIndex}
-                      <div class="bg-black/40 border-2 border-purple-500/50 rounded-lg p-2 md:p-4 text-center backdrop-blur-sm
-                                  hover:border-purple-400 transition-all duration-300">
-                        <span class="text-2xl md:text-4xl">{symbol}</span>
-                      </div>
-                    {/each}
-                  </div>
-                {/each}
-              </div>
-            {:else}
-              <!-- Empty Board -->
-              <div class="grid grid-cols-5 gap-1 md:gap-3 mb-4 md:mb-6">
-                {#each Array(5) as _, reelIndex}
-                  <div class="space-y-1 md:space-y-3">
-                    {#each Array(3) as _, symbolIndex}
-                      <div class="bg-black/40 border-2 border-gray-600 rounded-lg p-2 md:p-4 text-center">
-                        <span class="text-2xl md:text-4xl text-gray-500">?</span>
-                      </div>
-                    {/each}
-                  </div>
-                {/each}
-              </div>
-            {/if}
+            <SlotMachine 
+              symbols={lastSpin?.board || [['dragon', 'fire', 'diamond'], ['fire', 'crown', 'sword'], ['diamond', 'castle', 'star'], ['crown', 'bonus', 'multiplier'], ['sword', 'scatter', 'dragon']]}
+              gameId="mythical_dragons"
+              spinning={slotMachineSpinning}
+              onSpinComplete={onSlotMachineSpinComplete}
+            />
 
             <!-- Win Display -->
             {#if lastSpin}
@@ -277,14 +282,13 @@
             </div>
             
             <div class="space-y-2">
-              <Button
+              <button
                 on:click={spin}
                 disabled={loading || autoPlay || betAmount > balance}
-                class="w-full"
-                color="primary"
+                class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-bold py-2 px-4 rounded"
               >
                 {#if loading}
-                  <Spinner class="mr-3" size="4" color="white" />
+                  <Spinner class="mr-3" size="4" />
                   Spinning...
                 {:else if autoPlay}
                   Auto Playing ({autoSpinsRemaining})
@@ -292,36 +296,32 @@
                   <PlaySolid class="mr-2 w-4 h-4" />
                   SPIN (${betAmount.toFixed(2)})
                 {/if}
-              </Button>
+              </button>
               
               {#if !autoPlay}
                 <div class="grid grid-cols-2 gap-2">
-                  <Button
+                  <button
                     on:click={() => startAutoPlay(10)}
                     disabled={loading || balance < betAmount * 10}
-                    size="sm"
-                    color="alternative"
+                    class="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-800 text-white font-medium py-1 px-3 rounded text-sm"
                   >
                     Auto 10
-                  </Button>
-                  <Button
+                  </button>
+                  <button
                     on:click={() => startAutoPlay(25)}
                     disabled={loading || balance < betAmount * 25}
-                    size="sm"
-                    color="alternative"
+                    class="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-800 text-white font-medium py-1 px-3 rounded text-sm"
                   >
                     Auto 25
-                  </Button>
+                  </button>
                 </div>
               {:else}
-                <Button
+                <button
                   on:click={stopAutoPlay}
-                  class="w-full"
-                  color="red"
-                  size="sm"
+                  class="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-1 px-4 rounded text-sm"
                 >
                   Stop Auto Play
-                </Button>
+                </button>
               {/if}
             </div>
           </div>
@@ -334,7 +334,7 @@
             {#each dragonSymbols as symbol}
               <div class="flex justify-between items-center text-sm">
                 <div class="flex items-center space-x-2">
-                  <span class="text-xl">{symbol}</span>
+                  <GameSymbol {symbol} gameId="mythical_dragons" size="sm" />
                   <span class="text-purple-300">x3+</span>
                 </div>
                 <span class="text-yellow-400 font-semibold">{getSymbolMultiplier(symbol)}</span>
@@ -369,3 +369,18 @@
     </div>
   </div>
 </div>
+
+<!-- Auth Modal -->
+<AuthModal 
+  bind:open={showAuthModal} 
+  on:success={() => {
+    // Reinitialize session after successful auth
+    if ($user) {
+      gameTrackingService.startGameSession(
+        dragonConfig.game_id,
+        $user.id,
+        balance
+      ).then(id => sessionId = id);
+    }
+  }}
+/>

@@ -42,7 +42,7 @@
     gameConfig = phoenixConfig;
   });
 
-  async function spin() {
+  async function spin(): Promise<void> {
     if (!gameConfig || betAmount > balance || loading || !apiConnected) return;
     
     loading = true;
@@ -86,7 +86,7 @@
     }
   }
 
-  function startAutoPlay(spins: number) {
+  function startAutoPlay(spins: number): void {
     if (balance < betAmount * spins) {
       error = "Insufficient balance for auto play";
       return;
@@ -96,7 +96,7 @@
     spin();
   }
 
-  function stopAutoPlay() {
+  function stopAutoPlay(): void {
     autoPlay = false;
     autoSpinsRemaining = 0;
   }
@@ -129,6 +129,7 @@
         <div class="text-xl font-bold text-green-400">${balance.toFixed(2)}</div>
       </div>
     </div>
+  </div>
 
   <div class="max-w-7xl mx-auto p-6">
     <!-- API Status -->
@@ -228,13 +229,13 @@
             
             <div class="space-y-2">
               <Button
-                on:click={spin}
+                on:click={() => spin()}
                 disabled={loading || autoPlay || betAmount > balance || !apiConnected}
                 class="w-full"
                 color="primary"
               >
                 {#if loading}
-                  <Spinner class="mr-3" size="4" color="white" />
+                  <Spinner class="mr-3" size="4" />
                   Spinning...
                 {:else if autoPlay}
                   Auto Playing ({autoSpinsRemaining})
@@ -265,7 +266,7 @@
                 </div>
               {:else}
                 <Button
-                  on:click={stopAutoPlay}
+                  on:click={() => stopAutoPlay()}
                   class="w-full"
                   color="red"
                   size="sm"
