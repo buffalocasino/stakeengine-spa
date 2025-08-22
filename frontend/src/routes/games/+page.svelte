@@ -10,6 +10,10 @@
     UsersGroupSolid, HomeSolid, CartSolid
   } from "flowbite-svelte-icons";
   import { mathApi, type GameConfig, type SpinResult } from "$lib/api/mathApi";
+  import { apiConnection } from "$lib/stores/api";
+  import ApiStatus from "$lib/components/ApiStatus.svelte";
+  import Leaderboard from "$lib/components/Leaderboard.svelte";
+  import Achievements from "$lib/components/Achievements.svelte";
 
   let gameConfig: GameConfig | null = null;
   let betAmount = 1.0;
@@ -17,7 +21,7 @@
   let lastSpin: SpinResult | null = null;
   let loading = false;
   let error: string | null = null;
-  let apiConnected = false;
+  $: apiConnected = $apiConnection.connected;
   let activeTab = 'featured';
 
   // Featured games data for carousel
@@ -163,20 +167,20 @@
   </Breadcrumb>
 
   <!-- Hero Section -->
-  <div class="text-center mb-8">
-    <h1 class="text-5xl font-bold text-white mb-4">🎰 BuffaloCasino Games</h1>
-    <p class="text-xl text-gray-300 mb-6">Experience the thrill of premium casino gaming</p>
-    <div class="flex justify-center space-x-8 text-center">
+  <div class="text-center mb-8 px-4">
+    <h1 class="text-3xl md:text-5xl font-bold text-white mb-4">🎰 BuffaloCasino Games</h1>
+    <p class="text-lg md:text-xl text-gray-300 mb-6">Experience the thrill of premium casino gaming</p>
+    <div class="flex justify-center space-x-4 md:space-x-8 text-center">
       <div>
-        <div class="text-3xl font-bold text-green-400">50+</div>
-        <div class="text-gray-400 text-sm">Games</div>
+        <div class="text-2xl md:text-3xl font-bold text-green-400">50+</div>
+        <div class="text-gray-400 text-xs md:text-sm">Games</div>
       </div>
       <div>
-        <div class="text-3xl font-bold text-blue-400">$2.5M+</div>
-        <div class="text-gray-400 text-sm">Jackpots</div>
+        <div class="text-2xl md:text-3xl font-bold text-blue-400">$2.5M+</div>
+        <div class="text-gray-400 text-xs md:text-sm">Jackpots</div>
       </div>
       <div>
-        <div class="text-3xl font-bold text-purple-400">98%</div>
+        <div class="text-2xl md:text-3xl font-bold text-purple-400">98%</div>
         <div class="text-gray-400 text-sm">Max RTP</div>
       </div>
       <div>
@@ -206,13 +210,13 @@
     </div>
     
     <!-- Featured Games Grid (Simplified) -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 px-4">
       {#each featuredGames as game}
-        <Card class="p-6 bg-gradient-to-br {game.gradient} border-2 {game.borderColor} hover:border-opacity-100 transition-all duration-500 transform hover:scale-105">
+        <Card class="p-4 md:p-6 bg-gradient-to-br {game.gradient} border-2 {game.borderColor} hover:border-opacity-100 transition-all duration-500 transform hover:scale-105">
           <div class="text-center">
-            <div class="text-6xl mb-4">{game.emoji}</div>
-            <h3 class="text-xl font-bold text-white mb-2">{game.name}</h3>
-            <p class="text-gray-300 text-sm mb-4">{game.description}</p>
+            <div class="text-4xl md:text-6xl mb-3 md:mb-4">{game.emoji}</div>
+            <h3 class="text-lg md:text-xl font-bold text-white mb-2">{game.name}</h3>
+            <p class="text-gray-300 text-xs md:text-sm mb-3 md:mb-4">{game.description}</p>
             
             <div class="grid grid-cols-2 gap-2 mb-4 text-xs">
               <div class="bg-black/30 rounded p-2">
@@ -342,16 +346,31 @@
     </Card>
   </div>
 
+  <!-- API Status -->
+  <ApiStatus />
+
+  <!-- Achievements and Leaderboards -->
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+    <Achievements />
+    <Leaderboard />
+  </div>
+
   <!-- Game Testing Area -->
   <Tabs class="mb-8">
     <TabItem open value="featured" title="🎮 Play Games">
       <div class="text-center py-8">
         <h3 class="text-2xl font-bold text-white mb-4">Ready to Play?</h3>
         <p class="text-gray-400 mb-6">Choose from our featured games above or explore all categories</p>
-        <Button href="/games/mythical-dragons" size="lg" color="primary">
-          <PlaySolid class="mr-2 w-5 h-5" />
-          Start with Mythical Dragons
-        </Button>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <Button href="/games/mythical-dragons" size="lg" color="primary">
+            <PlaySolid class="mr-2 w-5 h-5" />
+            🐉 Mythical Dragons
+          </Button>
+          <Button href="/games/phoenix-rising" size="lg" color="alternative">
+            <PlaySolid class="mr-2 w-5 h-5" />
+            🔥 Phoenix Rising
+          </Button>
+        </div>
       </div>
     </TabItem>
     
@@ -361,11 +380,11 @@
         <p class="text-gray-400 mb-4">Test the game mechanics and math engine below</p>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 px-4">
         <!-- Game Controls -->
         <div class="lg:col-span-1">
-          <Card class="p-6">
-            <h2 class="text-xl font-semibold text-white mb-4">Test Controls</h2>
+          <Card class="p-4 md:p-6">
+            <h2 class="text-lg md:text-xl font-semibold text-white mb-4">Test Controls</h2>
             
             <div class="space-y-4">
               <div>

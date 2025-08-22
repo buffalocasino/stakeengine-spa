@@ -1,7 +1,11 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { user } from '$lib/stores/auth';
   import { mathApi, type GameConfig, type SpinResult } from '$lib/api/mathApi';
+  import { apiConnection } from '$lib/stores/api';
+  import { gameTrackingService, gameTracking } from '$lib/stores/gameTracking';
+  import ApiStatus from '$lib/components/ApiStatus.svelte';
+  import GameStats from '$lib/components/GameStats.svelte';
   import { Card, Button, Input, Label, Alert, Spinner } from 'flowbite-svelte';
   import { PlaySolid, CogSolid, ArrowLeftOutline } from 'flowbite-svelte-icons';
   
@@ -15,6 +19,13 @@
   let gameStarted = false;
   let autoPlay = false;
   let autoSpinsRemaining = 0;
+  
+  // Use centralized API connection and game tracking
+  $: apiConnected = $apiConnection.connected;
+  $: trackingState = $gameTracking;
+  
+  // Session management
+  let sessionId: string | null = null;
   
   // Mythical Dragons specific config
   const dragonSymbols = ['🐉', '🔥', '💎', '👑', '⚔️', '🏰', '🌟'];
@@ -41,13 +52,31 @@
 
   onMount(async () => {
     gameConfig = dragonConfig;
+    
+    // Start game session if user is logged in
+    if ($user) {
+      sessionId = await gameTrackingService.startGameSession(
+        dragonConfig.game_id,
+        $user.id,
+        balance
+      );
+    }
+  });
+  
+  onDestroy(async () => {
+    // End game session when component is destroyed
+    if (sessionId && $user) {
+      await gameTrackingService.endGameSession(balance);
+    }
   });
 
   async function spin() {
-    if (!gameConfig || betAmount > balance || loading) return;
+    if (!gameConfig || betAmount > balance || loading || !apiConnected) return;
     
     loading = true;
     error = null;
+    const spinStartTime = Date.now();
+    const balanceBefore = balance;
     
     try {
       const result = await mathApi.spin({
@@ -69,6 +98,23 @@
       lastSpin = { ...result, board: themedBoard };
       balance -= betAmount;
       balance += result.total_win;
+      const balanceAfter = balance;
+      const spinDuration = Date.now() - spinStartTime;
+      
+      // Track the play in Supabase if user is logged in
+      if ($user && sessionId) {
+        await gameTrackingService.recordGamePlay(
+          gameConfig.game_id,
+          $user.id,
+          betAmount,
+          result.total_win,
+          result.board, // Original board before theming
+          result.wins,
+          balanceBefore,
+          balanceAfter,
+          spinDuration
+        );
+      }
       
       // Auto play logic
       if (autoPlay && autoSpinsRemaining > 0) {
@@ -111,49 +157,53 @@
   }
 </script>
 
-<div class="min-h-screen bg-gradient-to-b from-purple-900 via-blue-900 to-black">
-  <!-- Header -->
-  <div class="bg-black/50 backdrop-blur-sm border-b border-purple-500/30 p-4">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
-      <div class="flex items-center space-x-4">
+<div class="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4 md:p-6">
+  <div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 md:mb-8 space-y-4 md:space-y-0">
+      <div class="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-4">
         <Button href="/games" color="alternative" size="sm">
           <ArrowLeftOutline class="w-4 h-4 mr-2" />
           Back to Games
         </Button>
         <div>
-          <h1 class="text-2xl font-bold text-white">🐉 Mythical Dragons</h1>
-          <p class="text-purple-300 text-sm">Legendary wins await in the dragon's lair</p>
+          <h1 class="text-2xl md:text-4xl font-bold text-white">🐉 Mythical Dragons</h1>
+          <p class="text-sm md:text-base text-gray-300">Legendary wins await in the dragon's lair</p>
         </div>
       </div>
-      
       <div class="text-right">
         <div class="text-sm text-gray-400">Balance</div>
         <div class="text-xl font-bold text-green-400">${balance.toFixed(2)}</div>
       </div>
     </div>
-  </div>
 
   <div class="max-w-7xl mx-auto p-6">
+    <!-- API Status -->
+    <ApiStatus />
+    
+    <!-- Game Statistics -->
+    <GameStats gameId="mythical_dragons" />
+    
     {#if error}
       <Alert color="red" class="mb-6">
         <span class="font-medium">Error!</span> {error}
       </Alert>
     {/if}
 
-    <div class="grid grid-cols-1 xl:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 xl:grid-cols-4 gap-4 md:gap-6">
       <!-- Game Board -->
       <div class="xl:col-span-3">
-        <Card class="p-6 bg-gradient-to-br from-purple-900/50 to-blue-900/50 border-purple-500/30">
+        <Card class="p-4 md:p-6 bg-gradient-to-br from-purple-900/50 to-blue-900/50 border-purple-500/30">
           <!-- Slot Machine -->
-          <div class="mb-6">
+          <div class="mb-4 md:mb-6">
             {#if lastSpin}
-              <div class="grid grid-cols-5 gap-3 mb-6">
+              <div class="grid grid-cols-5 gap-1 md:gap-3 mb-4 md:mb-6">
                 {#each lastSpin.board as reel, reelIndex}
-                  <div class="space-y-3">
+                  <div class="space-y-1 md:space-y-3">
                     {#each reel as symbol, symbolIndex}
-                      <div class="bg-black/40 border-2 border-purple-500/50 rounded-lg p-4 text-center backdrop-blur-sm
+                      <div class="bg-black/40 border-2 border-purple-500/50 rounded-lg p-2 md:p-4 text-center backdrop-blur-sm
                                   hover:border-purple-400 transition-all duration-300">
-                        <span class="text-4xl">{symbol}</span>
+                        <span class="text-2xl md:text-4xl">{symbol}</span>
                       </div>
                     {/each}
                   </div>
@@ -161,12 +211,12 @@
               </div>
             {:else}
               <!-- Empty Board -->
-              <div class="grid grid-cols-5 gap-3 mb-6">
+              <div class="grid grid-cols-5 gap-1 md:gap-3 mb-4 md:mb-6">
                 {#each Array(5) as _, reelIndex}
-                  <div class="space-y-3">
+                  <div class="space-y-1 md:space-y-3">
                     {#each Array(3) as _, symbolIndex}
-                      <div class="bg-black/40 border-2 border-gray-600 rounded-lg p-4 text-center">
-                        <span class="text-4xl text-gray-500">?</span>
+                      <div class="bg-black/40 border-2 border-gray-600 rounded-lg p-2 md:p-4 text-center">
+                        <span class="text-2xl md:text-4xl text-gray-500">?</span>
                       </div>
                     {/each}
                   </div>

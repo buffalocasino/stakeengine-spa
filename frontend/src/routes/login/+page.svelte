@@ -68,7 +68,9 @@
               disabled={loading}
               autocomplete="email"
             >
-              <EnvelopeSolid slot="left" class="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              <svelte:fragment slot="left">
+                <EnvelopeSolid class="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              </svelte:fragment>
             </Input>
           </div>
           
@@ -83,10 +85,10 @@
               disabled={loading}
               autocomplete="current-password"
             >
-              <button
-                slot="right"
-                type="button"
-                on:click={() => showPassword = !showPassword}
+              <svelte:fragment slot="right">
+                <button
+                  type="button"
+                  on:click={() => showPassword = !showPassword}
                 class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
               >
                 {#if showPassword}
@@ -94,7 +96,9 @@
                 {:else}
                   <EyeOutline class="w-4 h-4" />
                 {/if}
+                {showPassword ? "Hide" : "Show"}
               </button>
+              </svelte:fragment>
             </Input>
           </div>
           
@@ -105,7 +109,7 @@
             color="primary"
           >
             {#if loading}
-              <Spinner class="mr-3" size="4" color="white" />
+              <Spinner class="mr-3" size="4" />
               Signing in...
             {:else}
               Sign in
