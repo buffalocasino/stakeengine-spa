@@ -1,10 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { supabase } from '$lib/supabase';
+  import { browser } from '$app/environment';
+  import { user } from '$lib/stores/auth';
+  import { get } from 'svelte/store';
   import { Card, Badge, Avatar, Tabs, TabItem } from 'flowbite-svelte';
   import { FireSolid, StarSolid } from 'flowbite-svelte-icons';
 
-  export const gameId: string = '';
+  export let gameId: string = '';
   
   let leaderboards: any[] = [];
   let loading = true;
@@ -16,38 +18,9 @@
 
   async function loadLeaderboards() {
     try {
-      const { data, error } = await supabase
-        .from('leaderboard_entries')
-        .select(`
-          *,
-          leaderboards (
-            name,
-            description,
-            metric_type,
-            period_type
-          ),
-          users (
-            username,
-            email
-          )
-        `)
-        .order('rank', { ascending: true })
-        .limit(50);
-
-      if (error) throw error;
-      
-      // Group by leaderboard
-      const grouped = data?.reduce((acc: any, entry: any) => {
-        const key = entry.leaderboards.name;
-        if (!acc[key]) acc[key] = [];
-        acc[key].push(entry);
-        return acc;
-      }, {}) || {};
-
-      leaderboards = Object.entries(grouped).map(([name, entries]) => ({
-        name,
-        entries: (entries as any[]).slice(0, 10) // Top 10
-      }));
+      if (!browser) return;
+      // For now, return empty array - leaderboard would need server endpoint
+      leaderboards = [];
     } catch (error) {
       console.error('Error loading leaderboards:', error);
     }

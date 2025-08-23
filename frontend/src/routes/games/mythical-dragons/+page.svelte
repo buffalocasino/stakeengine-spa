@@ -114,7 +114,7 @@
       const balanceAfter = balance;
       const spinDuration = Date.now() - spinStartTime;
       
-      // Track the play in Supabase if user is logged in
+      // Track the play in database if user is logged in
       if ($user && sessionId) {
         await gameTrackingService.recordGamePlay(
           gameConfig.game_id,

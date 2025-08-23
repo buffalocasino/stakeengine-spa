@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { supabase } from "$lib/supabaseClient";
+    import { authApi } from '$lib/stores/auth';
     import { user } from "$lib/stores/auth";
     import { goto } from "$app/navigation";
     import { Card, Button, Input, Label, Alert, Spinner } from "flowbite-svelte";
@@ -20,12 +20,11 @@
       loading = true;
       error = null;
       
-      const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-      
-      if (err) {
-        error = err.message;
-      } else {
+      try {
+        await authApi.login(email, password);
         goto("/");
+      } catch (err: any) {
+        error = err.message;
       }
       
       loading = false;

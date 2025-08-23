@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { browser } from '$app/environment';
   import { user } from '$lib/stores/auth';
-  import { supabase } from '$lib/supabase';
+  import { get } from 'svelte/store';
   import { Card, Badge, Modal, Button, Progressbar } from 'flowbite-svelte';
   import { StarSolid, LockSolid, CheckCircleSolid } from 'flowbite-svelte-icons';
 
@@ -12,7 +13,7 @@
   let showModal = false;
 
   onMount(async () => {
-    if ($user) {
+    if (get(user)) {
       await loadAchievements();
     }
     loading = false;
@@ -20,49 +21,22 @@
 
   async function loadAchievements() {
     try {
-      // Load all achievements
-      const { data: allAchievements, error: achievementsError } = await supabase
-        .from('achievements')
-        .select('*')
-        .eq('is_active', true)
-        .order('category', { ascending: true });
-
-      if (achievementsError) throw achievementsError;
-
-      // Load user's achievements
-      const { data: userAchievementsData, error: userError } = await supabase
-        .from('user_achievements')
-        .select(`
-          *,
-          achievements (*)
-        `)
-        .eq('user_id', $user.id);
-
-      if (userError) throw userError;
-
-      achievements = allAchievements || [];
-      userAchievements = userAchievementsData || [];
+      if (!browser) return;
+      // For now, return empty array - achievements would need server endpoint
+      achievements = [];
     } catch (error) {
       console.error('Error loading achievements:', error);
     }
   }
 
-  async function claimAchievement(achievementId: string) {
-    try {
-      const { error } = await supabase
-        .from('user_achievements')
-        .update({ 
-          is_claimed: true, 
-          claimed_at: new Date().toISOString() 
-        })
-        .eq('user_id', $user.id)
-        .eq('achievement_id', achievementId);
+  async function claimAchievement(achievementId: number) {
+    const currentUser = get(user);
+    if (!currentUser || !browser) return;
 
-      if (error) throw error;
-      
-      // Reload achievements
-      await loadAchievements();
-      showModal = false;
+    try {
+      // For now, just add to local set - would need server endpoint
+      userAchievements.add(achievementId);
+      userAchievements = userAchievements; // Trigger reactivity
     } catch (error) {
       console.error('Error claiming achievement:', error);
     }

@@ -1,15 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
-
+// Game configuration is now handled client-side or via static files
 export const load = async () => {
-  const { data } = supabase
-    .storage
-    .from('configs')
-    .getPublicUrl('game-config.json');
-
-  return { configUrl: data.publicUrl };
+  // Return a static config URL or handle this client-side
+  return { configUrl: '/game-config.json' };
 };

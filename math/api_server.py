@@ -1,20 +1,68 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 import random
 from typing import List, Dict, Any, Optional
 import json
+import jwt
+import os
+from datetime import datetime, timedelta
 
 app = FastAPI(title="BuffaloCasino Math API", version="1.0.0")
+
+# JWT Configuration - should match your SvelteKit backend
+JWT_SECRET = os.getenv("JWT_SECRET", "your-super-secret-jwt-key-change-in-production")
+JWT_ALGORITHM = "HS256"
+
+# Security scheme
+security = HTTPBearer()
 
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5176", "http://127.0.0.1:5176"],  # Frontend URLs
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174", "http://localhost:5176", "http://127.0.0.1:5176"],  # Frontend URLs
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Auth dependency
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Validate JWT token and return user info"""
+    try:
+        token = credentials.credentials
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        user_id = payload.get("user_id")
+        email = payload.get("email")
+        
+        if not user_id or not email:
+            raise HTTPException(status_code=401, detail="Invalid token")
+            
+        return {"user_id": user_id, "email": email}
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+# Optional auth dependency (for endpoints that work with or without auth)
+async def get_current_user_optional(authorization: str = Header(None)):
+    """Optional auth - returns user if token is valid, None otherwise"""
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+    
+    try:
+        token = authorization.split(" ")[1]
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        user_id = payload.get("user_id")
+        email = payload.get("email")
+        
+        if user_id and email:
+            return {"user_id": user_id, "email": email}
+    except (jwt.ExpiredSignatureError, jwt.JWTError):
+        pass
+    
+    return None
 
 # Pydantic models for request/response
 class GameConfig(BaseModel):
@@ -64,7 +112,7 @@ async def health_check():
     return {"status": "healthy", "service": "buffalocasino-math-api"}
 
 @app.post("/api/game/spin", response_model=SpinResult)
-async def spin_game(request: SpinRequest):
+async def spin_game(request: SpinRequest, current_user: dict = Depends(get_current_user)):
     """Execute a single game spin"""
     try:
         # Generate random slot machine board
@@ -132,7 +180,7 @@ async def spin_game(request: SpinRequest):
         raise HTTPException(status_code=500, detail=f"Spin calculation failed: {str(e)}")
 
 @app.post("/api/game/simulate", response_model=SimulationResult)
-async def simulate_game(request: SimulationRequest):
+async def simulate_game(request: SimulationRequest, current_user: dict = Depends(get_current_user)):
     """Run game simulation"""
     try:
         total_bet = 0.0
@@ -176,7 +224,7 @@ async def simulate_game(request: SimulationRequest):
         raise HTTPException(status_code=500, detail=f"Simulation failed: {str(e)}")
 
 @app.get("/api/config/default")
-async def get_default_config():
+async def get_default_config(current_user: dict = Depends(get_current_user_optional)):
     """Get default game configuration"""
     return {
         "game_id": "slot_basic",

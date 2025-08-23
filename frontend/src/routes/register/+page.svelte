@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { supabase } from "$lib/supabaseClient";
+    import { authApi } from '$lib/stores/auth';
     import { user } from "$lib/stores/auth";
     import { goto } from "$app/navigation";
     import { Card, Button, Input, Label, Alert, Spinner } from "flowbite-svelte";
@@ -34,22 +34,12 @@
       error = null;
       success = null;
       
-      const { error: err } = await supabase.auth.signUp({ 
-        email, 
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`
-        }
-      });
-      
-      if (err) {
+      try {
+        await authApi.signup(email, password);
+        success = "Registration successful! You are now logged in.";
+        goto("/");
+      } catch (err: any) {
         error = err.message;
-      } else {
-        success = "Registration successful! Please check your email to confirm your account.";
-        // Clear form
-        email = "";
-        password = "";
-        confirmPassword = "";
       }
       
       loading = false;

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { user, loading } from '$lib/stores/auth';
-  import { supabase } from '$lib/supabaseClient';
+  import { authApi } from '$lib/stores/auth';
   import { Card, Button, Input, Label, Alert, Spinner } from 'flowbite-svelte';
   import { UserCircleSolid, PenSolid } from 'flowbite-svelte-icons';
   import { onMount } from 'svelte';

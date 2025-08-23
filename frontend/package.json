@@ -24,6 +24,7 @@
 		"@tailwindcss/forms": "^0.5.9",
 		"@tailwindcss/typography": "^0.5.15",
 		"@tailwindcss/vite": "^4.0.0",
+		"@types/pg": "^8.15.5",
 		"eslint": "^9.18.0",
 		"eslint-config-prettier": "^10.0.1",
 		"eslint-plugin-svelte": "^3.0.0",
@@ -47,6 +48,15 @@
 		]
 	},
 	"dependencies": {
-		"@supabase/supabase-js": "^2.55.0"
+		"@neondatabase/serverless": "^1.0.1",
+		"@supabase/supabase-js": "^2.55.0",
+		"@types/bcryptjs": "^2.4.6",
+		"@types/jsonwebtoken": "^9.0.10",
+		"bcryptjs": "^3.0.2",
+		"better-sqlite3": "^12.2.0",
+		"dotenv": "^17.2.1",
+		"jsonwebtoken": "^9.0.2",
+		"pg": "^8.16.3",
+		"sqlite3": "^5.1.7"
 	}
 }

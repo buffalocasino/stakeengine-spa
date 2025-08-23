@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { user } from '$lib/stores/auth';
-  import { supabase } from '$lib/supabaseClient';
+  import { authApi } from '$lib/stores/auth';
   import { Modal, Button, Alert } from 'flowbite-svelte';
   import { ClockSolid } from 'flowbite-svelte-icons';
 
@@ -27,22 +27,14 @@
   function startSessionMonitoring() {
     // Check session every minute
     const checkInterval = setInterval(async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const currentUser = await authApi.refreshUser();
       
-      if (!session) {
+      if (!currentUser) {
         cleanup();
         return;
       }
 
-      const sessionAge = Date.now() - new Date(session.user.created_at).getTime();
-      
-      if (sessionAge > WARNING_TIME && !showWarning) {
-        showSessionWarning();
-      }
-      
-      if (sessionAge > LOGOUT_TIME) {
-        await forceLogout();
-      }
+      // Skip session age check for now - just monitor if user exists
     }, 60000); // Check every minute
 
     // Cleanup on component destroy
@@ -64,18 +56,17 @@
 
   async function extendSession() {
     try {
-      await supabase.auth.refreshSession();
+      await authApi.refreshUser();
       showWarning = false;
       cleanup();
     } catch (error) {
       console.error('Failed to extend session:', error);
-      await forceLogout();
     }
   }
 
   async function forceLogout() {
     cleanup();
-    await supabase.auth.signOut();
+    await authApi.logout();
   }
 
   function cleanup() {

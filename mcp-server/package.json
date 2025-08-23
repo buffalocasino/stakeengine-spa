@@ -1,0 +1,19 @@
+{
+  "name": "stakeengine-neon-mcp",
+  "version": "1.0.0",
+  "description": "Neon MCP server for StakeEngine following Windsurf guide",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.4.0",
+    "@neondatabase/serverless": "^0.9.0",
+    "dotenv": "^16.0.0"
+  },
+  "keywords": ["mcp", "neon", "database", "windsurf"],
+  "author": "",
+  "license": "MIT"
+}

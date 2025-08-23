@@ -14,8 +14,7 @@
   import { page } from '$app/stores';
   import { onMount } from 'svelte';
   import { sidebarOpen } from '$lib/stores/sidebar';
-  import { user } from '$lib/stores/auth';
-  import { supabase } from '$lib/supabaseClient';
+  import { user, authApi } from '$lib/stores/auth';
   import { goto } from '$app/navigation';
 
   const navItems = [
@@ -51,7 +50,7 @@
   }
 
   async function logout() {
-    await supabase.auth.signOut();
+    await authApi.logout();
     goto('/login');
   }
 

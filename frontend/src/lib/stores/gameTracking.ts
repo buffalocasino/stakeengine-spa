@@ -1,9 +1,35 @@
 import { writable } from 'svelte/store';
-import { supabase } from '$lib/supabase';
-import type { Database } from '$lib/supabase';
+import { browser } from '$app/environment';
 
-type GamePlay = Database['public']['Tables']['game_plays']['Insert'];
-type GameSession = Database['public']['Tables']['game_sessions']['Row'];
+interface GamePlay {
+  session_id: string;
+  user_id: string;
+  game_id: string;
+  bet_amount: number;
+  win_amount: number;
+  net_result: number;
+  game_board: any;
+  winning_lines: any;
+  spin_duration_ms?: number;
+  balance_before: number;
+  balance_after: number;
+}
+
+interface GameSession {
+  id: string;
+  user_id: string;
+  game_id: string;
+  starting_balance: number;
+  ending_balance?: number;
+  total_spins: number;
+  total_wagered: number;
+  total_won: number;
+  net_result: number;
+  session_start: string;
+  session_end?: string;
+  ip_address?: string;
+  user_agent?: string;
+}
 
 export interface GameTrackingState {
   currentSession: GameSession | null;
@@ -30,35 +56,27 @@ class GameTrackingService {
 
   async startGameSession(gameId: string, userId: string, startingBalance: number): Promise<string | null> {
     try {
-      // Get the game UUID from game_id
-      const { data: game, error: gameError } = await supabase
-        .from('games')
-        .select('id')
-        .eq('game_id', gameId)
-        .single();
-
-      if (gameError || !game) {
-        console.error('Game not found:', gameError);
-        return null;
-      }
-
-      // Create new session
-      const { data: session, error } = await supabase
-        .from('game_sessions')
-        .insert({
-          user_id: userId,
-          game_id: game.id,
-          starting_balance: startingBalance,
-          ip_address: await this.getClientIP(),
-          user_agent: navigator.userAgent
+      if (!browser) return null;
+      
+      const response = await fetch('/api/game-tracking/start-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
+        },
+        body: JSON.stringify({
+          gameId,
+          startingBalance
         })
-        .select()
-        .single();
+      });
 
-      if (error) {
-        console.error('Error creating game session:', error);
+      if (!response.ok) {
+        console.error('Failed to start game session');
         return null;
       }
+
+      const { sessionId } = await response.json();
+      const session = { id: sessionId };
 
       this.currentSessionId = session.id;
       
@@ -96,45 +114,31 @@ class GameTrackingService {
         return false;
       }
 
-      // Get the game UUID from game_id
-      const { data: game, error: gameError } = await supabase
-        .from('games')
-        .select('id')
-        .eq('game_id', gameId)
-        .single();
+      if (!browser) return false;
 
-      if (gameError || !game) {
-        console.error('Game not found:', gameError);
+      const response = await fetch('/api/game-tracking/record-play', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
+        },
+        body: JSON.stringify({
+          sessionId: this.currentSessionId,
+          gameId,
+          betAmount,
+          winAmount,
+          gameBoard,
+          winningLines,
+          balanceBefore,
+          balanceAfter,
+          spinDuration
+        })
+      });
+
+      if (!response.ok) {
+        console.error('Failed to record game play');
         return false;
       }
-
-      const netResult = winAmount - betAmount;
-
-      const gamePlay: GamePlay = {
-        session_id: this.currentSessionId,
-        user_id: userId,
-        game_id: game.id,
-        bet_amount: betAmount,
-        win_amount: winAmount,
-        net_result: netResult,
-        game_board: gameBoard,
-        winning_lines: winningLines,
-        spin_duration_ms: spinDuration,
-        balance_before: balanceBefore,
-        balance_after: balanceAfter
-      };
-
-      const { error } = await supabase
-        .from('game_plays')
-        .insert(gamePlay);
-
-      if (error) {
-        console.error('Error recording game play:', error);
-        return false;
-      }
-
-      // Update session totals
-      await this.updateSessionTotals(betAmount, winAmount);
 
       // Update local state
       gameTracking.update(state => ({
@@ -157,16 +161,22 @@ class GameTrackingService {
         return false;
       }
 
-      const { error } = await supabase
-        .from('game_sessions')
-        .update({
-          session_end: new Date().toISOString(),
-          ending_balance: endingBalance
-        })
-        .eq('id', this.currentSessionId);
+      if (!browser) return false;
 
-      if (error) {
-        console.error('Error ending game session:', error);
+      const response = await fetch('/api/game-tracking/end-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth-token')}`
+        },
+        body: JSON.stringify({
+          sessionId: this.currentSessionId,
+          endingBalance
+        })
+      });
+
+      if (!response.ok) {
+        console.error('Failed to end game session');
         return false;
       }
 
@@ -184,19 +194,8 @@ class GameTrackingService {
   }
 
   private async updateSessionTotals(betAmount: number, winAmount: number): Promise<void> {
-    if (!this.currentSessionId) return;
-
-    const netResult = winAmount - betAmount;
-
-    await supabase
-      .from('game_sessions')
-      .update({
-        total_spins: supabase.sql`total_spins + 1`,
-        total_wagered: supabase.sql`total_wagered + ${betAmount}`,
-        total_won: supabase.sql`total_won + ${winAmount}`,
-        net_result: supabase.sql`net_result + ${netResult}`
-      })
-      .eq('id', this.currentSessionId);
+    // Session totals are now updated in the record-play endpoint
+    return;
   }
 
   private async getClientIP(): Promise<string | null> {
@@ -210,73 +209,15 @@ class GameTrackingService {
   }
 
   async getUserStatistics(userId: string, gameId?: string, days: number = 30) {
-    try {
-      let query = supabase
-        .from('wagering_statistics')
-        .select(`
-          *,
-          games:game_id (
-            name,
-            game_id,
-            theme
-          )
-        `)
-        .eq('user_id', userId)
-        .gte('date', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
-        .order('date', { ascending: false });
-
-      if (gameId) {
-        const { data: game } = await supabase
-          .from('games')
-          .select('id')
-          .eq('game_id', gameId)
-          .single();
-        
-        if (game) {
-          query = query.eq('game_id', game.id);
-        }
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Error fetching user statistics:', error);
-        return null;
-      }
-
-      return data;
-    } catch (error) {
-      console.error('Error fetching user statistics:', error);
-      return null;
-    }
+    // This would need a separate API endpoint if needed
+    console.log('getUserStatistics not implemented in client-side version');
+    return null;
   }
 
   async getRecentPlays(userId: string, limit: number = 50) {
-    try {
-      const { data, error } = await supabase
-        .from('game_plays')
-        .select(`
-          *,
-          games:game_id (
-            name,
-            game_id,
-            theme
-          )
-        `)
-        .eq('user_id', userId)
-        .order('played_at', { ascending: false })
-        .limit(limit);
-
-      if (error) {
-        console.error('Error fetching recent plays:', error);
-        return null;
-      }
-
-      return data;
-    } catch (error) {
-      console.error('Error fetching recent plays:', error);
-      return null;
-    }
+    // This would need a separate API endpoint if needed
+    console.log('getRecentPlays not implemented in client-side version');
+    return null;
   }
 }
 

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { supabase } from '$lib/supabaseClient';
+  import { authApi } from '$lib/stores/auth';
   import { Modal, Card, Input, Label, Alert, Spinner, Tabs, TabItem } from 'flowbite-svelte';
   import { Button } from 'flowbite-svelte';
   import { EnvelopeSolid, EyeSlashOutline, EyeOutline, UserSolid } from 'flowbite-svelte-icons';
@@ -45,13 +45,12 @@
     loading = true;
     error = null;
     
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-    
-    if (err) {
-      error = err.message;
-    } else {
+    try {
+      await authApi.login(email, password);
       closeModal();
       dispatch('success', { type: 'login' });
+    } catch (err: any) {
+      error = err.message;
     }
     
     loading = false;
@@ -76,21 +75,12 @@
     loading = true;
     error = null;
     
-    const { error: err } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName
-        }
-      }
-    });
-    
-    if (err) {
-      error = err.message;
-    } else {
+    try {
+      await authApi.signup(email, password, fullName);
       closeModal();
       dispatch('success', { type: 'signup' });
+    } catch (err: any) {
+      error = err.message;
     }
     
     loading = false;

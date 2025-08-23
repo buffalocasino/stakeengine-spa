@@ -55,9 +55,19 @@ class MathApiClient {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
     
+    // Get auth token from localStorage if available
+    let authHeaders = {};
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('auth_token');
+      if (token) {
+        authHeaders = { 'Authorization': `Bearer ${token}` };
+      }
+    }
+    
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
+        ...authHeaders,
         ...options.headers,
       },
       ...options,
