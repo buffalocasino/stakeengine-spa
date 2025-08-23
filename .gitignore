@@ -156,3 +156,6 @@ private/
 *.bak
 *.backup
 backup/
+
+# Sensitive server files
+frontend/src/hooks.server.ts
