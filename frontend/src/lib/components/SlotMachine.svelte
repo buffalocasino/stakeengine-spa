@@ -9,12 +9,55 @@
   export let spinning: boolean = false;
   export let onSpinComplete: () => void = () => {};
   
+  // Base design values for gameboard UI positioning
+  const BASE_W = 1536;
+  const BASE_H = 1024;
+  const REEL_AREA_LEFT = 293;    // Left edge of reel area
+  const REEL_AREA_RIGHT = 1212;  // Right edge of reel area
+  const REEL_AREA_TOP = 293;     // Top of reel area
+  const REEL_AREA_BOTTOM = 727;  // Bottom of reel area
+  const REEL_AREA_W = 910;       // Width: 910px for reels container
+  const REEL_AREA_H = 385;       // Height: 385px for reels container
+  const REEL_AREA_X = REEL_AREA_LEFT;                    // Left position: 293px
+  const REEL_AREA_Y = REEL_AREA_TOP;                     // Top position: 293px
+  
+  // Calculate positioning for 5 reels of 160px width
+  const FRAME_WIDTH = 160;   // Exact width of each reel frame
+  const FRAME_HEIGHT = 385;  // Exact height of each reel frame
+  const TOTAL_REEL_WIDTH = 5 * FRAME_WIDTH;  // 800px total for 5 reels
+  const AVAILABLE_GAP_SPACE = REEL_AREA_W - TOTAL_REEL_WIDTH;  // 910 - 800 = 110px
+  const GAP_X = AVAILABLE_GAP_SPACE / 4;  // Distribute remaining space across 4 gaps = 27.5px
+  const COL_W = FRAME_WIDTH; // Use exact frame width
+  const ROW_H = FRAME_HEIGHT / 3;  // 3 visible rows
+  
+  // Frame display size (scaled to your UI)
+  export let frameDisplaySize = BASE_W; 
+  
+  // Calculate scale and CSS variables
+  $: scaleX = frameDisplaySize / BASE_W;
+  $: scaleY = (frameDisplaySize * BASE_H / BASE_W) / BASE_H;
+  $: scale = Math.min(scaleX, scaleY);
+  $: cssVars = {
+    '--frame-width': `${frameDisplaySize}px`,
+    '--frame-height': `${frameDisplaySize * BASE_H / BASE_W}px`,
+    '--reel-left': `${REEL_AREA_X * scale}px`,
+    '--reel-top': `${REEL_AREA_Y * scale}px`,
+    '--reel-w': `${REEL_AREA_W * scale}px`,
+    '--reel-h': `${REEL_AREA_H * scale}px`,
+    '--col-w': `${COL_W * scale}px`,
+    '--row-h': `${ROW_H * scale}px`,
+    '--gap-x': `${GAP_X * scale}px`,
+    '--scale': scale,
+  };
+  
   // Slot machine configuration
   const REEL_COUNT = 5;
-  const SYMBOL_HEIGHT = 120;
   const VISIBLE_SYMBOLS = 3;
   const SPIN_DURATION = 2000;
   const REEL_DELAY = 200;
+  
+  // Dynamic symbol height based on scale
+  $: SYMBOL_HEIGHT = ROW_H * scale;
   
   // Animation states
   let reelStates: Array<{
@@ -135,10 +178,13 @@
   }
 </script>
 
-<div class="slot-machine">
-  <div class="reels-container">
+<div class="slot-machine" style={`--frame-width: ${cssVars['--frame-width']}; --frame-height: ${cssVars['--frame-height']};`}>
+  <div class="reels-container" style={`left: ${cssVars['--reel-left']}; top: ${cssVars['--reel-top']};`}>
     {#each Array(REEL_COUNT) as _, reelIndex}
-      <div class="reel" style="height: {VISIBLE_SYMBOLS * SYMBOL_HEIGHT}px;">
+      <div 
+        class="reel" 
+        style={`width: ${reelIndex < 3 ? '180px' : '195px'}; height: ${VISIBLE_SYMBOLS * SYMBOL_HEIGHT}px;`}
+      >
         <div 
           class="reel-strip" 
           style="transform: translateY({reelIndex === 0 ? $reel0Position : reelIndex === 1 ? $reel1Position : reelIndex === 2 ? $reel2Position : reelIndex === 3 ? $reel3Position : $reel4Position}px); height: {(reelStates[reelIndex]?.symbols.length || VISIBLE_SYMBOLS) * SYMBOL_HEIGHT}px;"
@@ -149,7 +195,7 @@
                 class="symbol-slot"
                 style="height: {SYMBOL_HEIGHT}px;"
               >
-                <GameSymbol {symbol} {gameId} size="lg" />
+                <GameSymbol {symbol} {gameId} size="lg" style="width: 100%; height: 100%;" />
               </div>
             {/each}
           {:else}
@@ -158,7 +204,7 @@
                 class="symbol-slot"
                 style="height: {SYMBOL_HEIGHT}px;"
               >
-                <GameSymbol symbol="dragon" {gameId} size="lg" />
+                <GameSymbol symbol="dragon" {gameId} size="lg" style="width: 100%; height: 100%;" />
               </div>
             {/each}
           {/if}
@@ -183,12 +229,13 @@
 <style>
   .slot-machine {
     position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(30, 20, 60, 0.9));
+    width: var(--frame-width);
+    height: var(--frame-height);
+    background-image: url('/images/games/mythical-dragons/ui/gameboard_ui.webp');
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
     border-radius: 16px;
-    padding: 20px;
     border: 2px solid rgba(147, 51, 234, 0.5);
     box-shadow: 
       0 0 30px rgba(147, 51, 234, 0.3),
@@ -197,20 +244,15 @@
   
   .reels-container {
     display: flex;
-    gap: 8px;
-    position: relative;
+    gap: var(--gap-x);
+    position: absolute;
   }
   
   .reel {
     position: relative;
-    width: 100px;
     overflow: hidden;
     border-radius: 12px;
-    border: 2px solid rgba(147, 51, 234, 0.6);
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.9), rgba(20, 10, 40, 0.9));
-    box-shadow: 
-      inset 0 0 15px rgba(0, 0, 0, 0.8),
-      0 0 10px rgba(147, 51, 234, 0.2);
+    background: transparent;
   }
   
   .reel-strip {
@@ -223,8 +265,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-bottom: 1px solid rgba(147, 51, 234, 0.2);
-    background: radial-gradient(circle at center, rgba(147, 51, 234, 0.1), transparent);
+    width: 100%;
   }
   
   .reel-overlay {
@@ -339,5 +380,32 @@
     .reels-container {
       gap: 4px;
     }
+  }
+  
+  .slot-machine .symbol-slot :global(*) {
+    width: 160px !important;
+    height: 128px !important;
+    max-width: 160px !important;
+    max-height: 128px !important;
+    min-width: 160px !important;
+    min-height: 128px !important;
+  }
+  
+  .slot-machine .symbol-slot :global(img) {
+    width: 160px !important;
+    height: 128px !important;
+    max-width: 160px !important;
+    max-height: 128px !important;
+    min-width: 160px !important;
+    min-height: 128px !important;
+    object-fit: contain !important;
+  }
+  
+  .slot-machine .symbol-slot :global(.w-16),
+  .slot-machine .symbol-slot :global(.h-16),
+  .slot-machine .symbol-slot :global(.w-full),
+  .slot-machine .symbol-slot :global(.h-full) {
+    width: 160px !important;
+    height: 128px !important;
   }
 </style>

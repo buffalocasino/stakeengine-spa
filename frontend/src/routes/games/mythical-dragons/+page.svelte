@@ -180,191 +180,238 @@
     };
     return multipliers[symbol] || '1x';
   }
+  
+  let scale = 1;
+  
+  function updateScale() {
+    const container = document.querySelector('.game-content');
+    if (!container) return;
+    
+    const containerWidth = container.clientWidth - 32; // Account for padding
+    const containerHeight = window.innerHeight - 160; // Account for header and margins
+    
+    // Base dimensions of the game (adjust these to match your game's aspect ratio)
+    const baseWidth = 1000;
+    const baseHeight = 600;
+    
+    // Calculate scale to fit both width and height
+    const widthScale = containerWidth / baseWidth;
+    const heightScale = containerHeight / baseHeight;
+    
+    // Use the smaller scale to ensure everything fits
+    scale = Math.min(widthScale, heightScale, 1);
+  }
+  
+  onMount(() => {
+    updateScale();
+    const resizeObserver = new ResizeObserver(updateScale);
+    const container = document.querySelector('.game-content');
+    if (container) {
+      resizeObserver.observe(container);
+    }
+    return () => {
+      if (container) {
+        resizeObserver.unobserve(container);
+      }
+    };
+  });
 </script>
 
-<div class="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4 md:p-6">
-  <div class="max-w-6xl mx-auto">
+<div class="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4 overflow-hidden">
+  <div class="max-w-7xl mx-auto h-full flex flex-col">
     <!-- Header -->
-    <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 md:mb-8 space-y-4 md:space-y-0">
-      <div class="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-4">
-        <Button href="/games" color="alternative" size="sm">
-          <ArrowLeftOutline class="w-4 h-4 mr-2" />
-          Back to Games
-        </Button>
-        <div>
-          <h1 class="text-2xl md:text-4xl font-bold text-white">🐉 Mythical Dragons</h1>
-          <p class="text-sm md:text-base text-gray-300">Legendary wins await in the dragon's lair</p>
-        </div>
-      </div>
-      <div class="text-right">
-        <div class="text-sm text-gray-400">Balance</div>
-        <div class="text-xl font-bold text-green-400">${balance.toFixed(2)}</div>
-      </div>
+    <div class="flex items-center justify-between mb-4 h-16">
+      <button 
+        on:click={() => window.history.back()}
+        class="flex items-center text-white hover:text-purple-300 transition-colors text-sm sm:text-base"
+        aria-label="Back to games"
+      >
+        <ArrowLeftOutline class="w-5 h-5 sm:w-6 sm:h-6 mr-1 sm:mr-2" />
+        <span class="hidden sm:inline">Back to Games</span>
+      </button>
+      
+      <h1 class="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+        Mythical Dragons
+      </h1>
+      
+      <div class="w-8 sm:w-10"></div>
     </div>
-  </div>
-
-  <div class="max-w-7xl mx-auto p-6">
-    <!-- API Status -->
-    <ApiStatus />
     
-    <!-- Game Statistics -->
-    <GameStats gameId="mythical_dragons" />
-    
-    {#if error}
-      <Alert color="red" class="mb-6">
-        <span class="font-medium">Error!</span> {error}
-      </Alert>
-    {/if}
+    <!-- Game Container -->
+    <div class="game-container flex-1 flex items-center justify-center">
+      <div 
+        class="game-content relative"
+        style="
+          transform: scale({scale});
+          transform-origin: center;
+          width: 1000px;
+          max-width: 100%;
+          margin: 0 auto;
+        "
+      >
+        <!-- API Status -->
+        <ApiStatus />
+        
+        <!-- Game Statistics -->
+        <GameStats gameId="mythical_dragons" />
+        
+        {#if error}
+          <Alert color="red" class="mb-6">
+            <span class="font-medium">Error!</span> {error}
+          </Alert>
+        {/if}
 
-    <div class="grid grid-cols-1 xl:grid-cols-4 gap-4 md:gap-6">
-      <!-- Game Board -->
-      <div class="xl:col-span-3">
-        <Card class="p-4 md:p-6 bg-gradient-to-br from-purple-900/50 to-blue-900/50 border-purple-500/30">
-          <!-- Slot Machine -->
-          <div class="mb-4 md:mb-6">
-            <SlotMachine 
-              symbols={lastSpin?.board || [['dragon', 'fire', 'diamond'], ['fire', 'crown', 'sword'], ['diamond', 'castle', 'star'], ['crown', 'bonus', 'multiplier'], ['sword', 'scatter', 'dragon']]}
-              gameId="mythical_dragons"
-              spinning={slotMachineSpinning}
-              onSpinComplete={onSlotMachineSpinComplete}
-            />
+        <div class="grid grid-cols-1 xl:grid-cols-4 gap-4 md:gap-6">
+          <!-- Game Board -->
+          <div class="xl:col-span-3">
+            <Card class="p-4 md:p-6 bg-gradient-to-br from-purple-900/50 to-blue-900/50 border-purple-500/30">
+              <!-- Slot Machine -->
+              <div class="mb-4 md:mb-6">
+                <SlotMachine 
+                  symbols={lastSpin?.board || [['dragon', 'fire', 'diamond'], ['fire', 'crown', 'sword'], ['diamond', 'castle', 'star'], ['crown', 'bonus', 'multiplier'], ['sword', 'scatter', 'dragon']]}
+                  gameId="mythical_dragons"
+                  spinning={slotMachineSpinning}
+                  onSpinComplete={onSlotMachineSpinComplete}
+                />
 
-            <!-- Win Display -->
-            {#if lastSpin}
-              {#if lastSpin.total_win > 0}
-                <div class="bg-gradient-to-r from-yellow-900/50 to-orange-900/50 border border-yellow-500/50 rounded-lg p-6 mb-4">
-                  <div class="text-center">
-                    <h3 class="text-2xl font-bold text-yellow-400 mb-2">🎉 DRAGON WIN! 🎉</h3>
-                    <div class="text-4xl font-bold text-yellow-400 mb-4">
-                      ${lastSpin.total_win.toFixed(2)}
-                    </div>
-                    
-                    {#if lastSpin.wins.length > 0}
-                      <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {#each lastSpin.wins as win}
-                          <div class="bg-black/30 rounded p-2 text-yellow-300 text-sm">
-                            {win.symbol} x{win.kind} = ${win.win.toFixed(2)}
+                <!-- Win Display -->
+                {#if lastSpin}
+                  {#if lastSpin.total_win > 0}
+                    <div class="bg-gradient-to-r from-yellow-900/50 to-orange-900/50 border border-yellow-500/50 rounded-lg p-6 mb-4">
+                      <div class="text-center">
+                        <h3 class="text-2xl font-bold text-yellow-400 mb-2">🎉 DRAGON WIN! 🎉</h3>
+                        <div class="text-4xl font-bold text-yellow-400 mb-4">
+                          ${lastSpin.total_win.toFixed(2)}
+                        </div>
+                        
+                        {#if lastSpin.wins.length > 0}
+                          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {#each lastSpin.wins as win}
+                              <div class="bg-black/30 rounded p-2 text-yellow-300 text-sm">
+                                {win.symbol} x{win.kind} = ${win.win.toFixed(2)}
+                              </div>
+                            {/each}
                           </div>
-                        {/each}
+                        {/if}
                       </div>
-                    {/if}
-                  </div>
-                </div>
-              {:else}
-                <div class="bg-gray-900/50 border border-gray-600 rounded-lg p-4 mb-4 text-center">
-                  <div class="text-gray-400">The dragons slumber... Try again!</div>
-                </div>
-              {/if}
-            {/if}
-          </div>
-        </Card>
-      </div>
-
-      <!-- Controls & Info -->
-      <div class="space-y-6">
-        <!-- Game Controls -->
-        <Card class="p-6 bg-gradient-to-br from-purple-900/50 to-blue-900/50 border-purple-500/30">
-          <h3 class="text-lg font-semibold text-white mb-4">🎮 Game Controls</h3>
-          
-          <div class="space-y-4">
-            <div>
-              <Label for="bet" class="mb-2 text-purple-300">Bet Amount</Label>
-              <Input
-                id="bet"
-                type="number"
-                bind:value={betAmount}
-                min="0.1"
-                max={Math.min(balance, gameConfig?.max_bet || 500)}
-                step="0.1"
-                disabled={loading || autoPlay}
-                class="bg-black/30 border-purple-500/50"
-              />
-            </div>
-            
-            <div class="space-y-2">
-              <button
-                on:click={spin}
-                disabled={loading || autoPlay || betAmount > balance}
-                class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-bold py-2 px-4 rounded"
-              >
-                {#if loading}
-                  <Spinner class="mr-3" size="4" />
-                  Spinning...
-                {:else if autoPlay}
-                  Auto Playing ({autoSpinsRemaining})
-                {:else}
-                  <PlaySolid class="mr-2 w-4 h-4" />
-                  SPIN (${betAmount.toFixed(2)})
+                    </div>
+                  {:else}
+                    <div class="bg-gray-900/50 border border-gray-600 rounded-lg p-4 mb-4 text-center">
+                      <div class="text-gray-400">The dragons slumber... Try again!</div>
+                    </div>
+                  {/if}
                 {/if}
-              </button>
-              
-              {#if !autoPlay}
-                <div class="grid grid-cols-2 gap-2">
-                  <button
-                    on:click={() => startAutoPlay(10)}
-                    disabled={loading || balance < betAmount * 10}
-                    class="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-800 text-white font-medium py-1 px-3 rounded text-sm"
-                  >
-                    Auto 10
-                  </button>
-                  <button
-                    on:click={() => startAutoPlay(25)}
-                    disabled={loading || balance < betAmount * 25}
-                    class="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-800 text-white font-medium py-1 px-3 rounded text-sm"
-                  >
-                    Auto 25
-                  </button>
-                </div>
-              {:else}
-                <button
-                  on:click={stopAutoPlay}
-                  class="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-1 px-4 rounded text-sm"
-                >
-                  Stop Auto Play
-                </button>
-              {/if}
-            </div>
-          </div>
-        </Card>
-
-        <!-- Paytable -->
-        <Card class="p-6 bg-gradient-to-br from-purple-900/50 to-blue-900/50 border-purple-500/30">
-          <h3 class="text-lg font-semibold text-white mb-4">💰 Paytable</h3>
-          <div class="space-y-2">
-            {#each dragonSymbols as symbol}
-              <div class="flex justify-between items-center text-sm">
-                <div class="flex items-center space-x-2">
-                  <GameSymbol {symbol} gameId="mythical_dragons" size="sm" />
-                  <span class="text-purple-300">x3+</span>
-                </div>
-                <span class="text-yellow-400 font-semibold">{getSymbolMultiplier(symbol)}</span>
               </div>
-            {/each}
+            </Card>
           </div>
-        </Card>
 
-        <!-- Game Info -->
-        <Card class="p-6 bg-gradient-to-br from-purple-900/50 to-blue-900/50 border-purple-500/30">
-          <h3 class="text-lg font-semibold text-white mb-4">ℹ️ Game Info</h3>
-          <div class="space-y-2 text-sm">
-            <div class="flex justify-between">
-              <span class="text-gray-400">RTP:</span>
-              <span class="text-white">{gameConfig ? (gameConfig.rtp * 100).toFixed(1) : '96.0'}%</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-400">Paylines:</span>
-              <span class="text-white">9</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-400">Max Bet:</span>
-              <span class="text-white">${gameConfig?.max_bet || 500}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-400">Volatility:</span>
-              <span class="text-white">High</span>
-            </div>
+          <!-- Controls & Info -->
+          <div class="space-y-6">
+            <!-- Game Controls -->
+            <Card class="p-6 bg-gradient-to-br from-purple-900/50 to-blue-900/50 border-purple-500/30">
+              <h3 class="text-lg font-semibold text-white mb-4">🎮 Game Controls</h3>
+              
+              <div class="space-y-4">
+                <div>
+                  <Label for="bet" class="mb-2 text-purple-300">Bet Amount</Label>
+                  <Input
+                    id="bet"
+                    type="number"
+                    bind:value={betAmount}
+                    min="0.1"
+                    max={Math.min(balance, gameConfig?.max_bet || 500)}
+                    step="0.1"
+                    disabled={loading || autoPlay}
+                    class="bg-black/30 border-purple-500/50"
+                  />
+                </div>
+                
+                <div class="space-y-2">
+                  <button
+                    on:click={spin}
+                    disabled={loading || autoPlay || betAmount > balance}
+                    class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-bold py-2 px-4 rounded"
+                  >
+                    {#if loading}
+                      <Spinner class="mr-3" size="4" />
+                      Spinning...
+                    {:else if autoPlay}
+                      Auto Playing ({autoSpinsRemaining})
+                    {:else}
+                      <PlaySolid class="mr-2 w-4 h-4" />
+                      SPIN (${betAmount.toFixed(2)})
+                    {/if}
+                  </button>
+                  
+                  {#if !autoPlay}
+                    <div class="grid grid-cols-2 gap-2">
+                      <button
+                        on:click={() => startAutoPlay(10)}
+                        disabled={loading || balance < betAmount * 10}
+                        class="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-800 text-white font-medium py-1 px-3 rounded text-sm"
+                      >
+                        Auto 10
+                      </button>
+                      <button
+                        on:click={() => startAutoPlay(25)}
+                        disabled={loading || balance < betAmount * 25}
+                        class="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-800 text-white font-medium py-1 px-3 rounded text-sm"
+                      >
+                        Auto 25
+                      </button>
+                    </div>
+                  {:else}
+                    <button
+                      on:click={stopAutoPlay}
+                      class="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-1 px-4 rounded text-sm"
+                    >
+                      Stop Auto Play
+                    </button>
+                  {/if}
+                </div>
+              </div>
+            </Card>
+
+            <!-- Paytable -->
+            <Card class="p-6 bg-gradient-to-br from-purple-900/50 to-blue-900/50 border-purple-500/30">
+              <h3 class="text-lg font-semibold text-white mb-4">💰 Paytable</h3>
+              <div class="space-y-2">
+                {#each dragonSymbols as symbol}
+                  <div class="flex justify-between items-center text-sm">
+                    <div class="flex items-center space-x-2">
+                      <GameSymbol {symbol} gameId="mythical_dragons" size="sm" />
+                      <span class="text-purple-300">x3+</span>
+                    </div>
+                    <span class="text-yellow-400 font-semibold">{getSymbolMultiplier(symbol)}</span>
+                  </div>
+                {/each}
+              </div>
+            </Card>
+
+            <!-- Game Info -->
+            <Card class="p-6 bg-gradient-to-br from-purple-900/50 to-blue-900/50 border-purple-500/30">
+              <h3 class="text-lg font-semibold text-white mb-4">ℹ️ Game Info</h3>
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-gray-400">RTP:</span>
+                  <span class="text-white">{gameConfig ? (gameConfig.rtp * 100).toFixed(1) : '96.0'}%</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Paylines:</span>
+                  <span class="text-white">9</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Max Bet:</span>
+                  <span class="text-white">${gameConfig?.max_bet || 500}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Volatility:</span>
+                  <span class="text-white">High</span>
+                </div>
+              </div>
+            </Card>
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   </div>
@@ -384,3 +431,20 @@
     }
   }}
 />
+
+<style>
+  html, body, #svelte {
+    height: 100%;
+    overflow: hidden;
+  }
+  
+  .game-container {
+    min-height: 0; /* Allow container to shrink below content size */
+  }
+  
+  @media (max-width: 640px) {
+    .game-content {
+      padding: 0 8px;
+    }
+  }
+</style>

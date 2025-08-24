@@ -19,8 +19,13 @@
   async function loadLeaderboards() {
     try {
       if (!browser) return;
+      // TODO: Implement actual leaderboard API call using gameId
+      // const response = await fetch(`/api/leaderboards?gameId=${gameId}`);
+      // leaderboards = await response.json();
+      
       // For now, return empty array - leaderboard would need server endpoint
       leaderboards = [];
+      console.log('Loading leaderboards for game:', gameId);
     } catch (error) {
       console.error('Error loading leaderboards:', error);
     }
